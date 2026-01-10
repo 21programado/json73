@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Constructor Visual de JSON</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .root-selector {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .root-selector label {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .root-selector select {
+            padding: 8px 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            background: white;
+        }
+
+        .root-selector select:focus {
+            outline: none;
+            border-color: #8b5cf6;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .btn-primary { background: #3b82f6; color: white; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-purple { background: #8b5cf6; color: white; }
+        .btn-gray { background: #4b5563; color: white; }
+        .btn-danger { background: #ef4444; color: white; }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 968px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .panel h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .editor {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 50px 20px;
+            font-style: italic;
+        }
+
+        .property-group {
+            margin-left: 20px;
+            border-left: 2px solid #3b82f6;
+            padding-left: 15px;
+            margin-bottom: 15px;
+        }
+
+        .array-group {
+            margin-left: 20px;
+            border-left: 2px solid #8b5cf6;
+            padding-left: 15px;
+            margin-bottom: 15px;
+        }
+
+        .property-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .property-key {
+            padding: 6px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            background: #eff6ff;
+            color: #1e40af;
+            min-width: 120px;
+        }
+
+        .property-value {
+            flex: 1;
+            padding: 6px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .array-index {
+            color: #8b5cf6;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            min-width: 40px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: transparent;
+            color: #666;
+            transition: all 0.2s;
+        }
+
+        .btn-small:hover {
+            color: #333;
+            background: #f3f4f6;
+        }
+
+        .btn-delete {
+            color: #ef4444;
+        }
+
+        .btn-delete:hover {
+            background: #fee2e2;
+        }
+
+        .btn-add {
+            color: #3b82f6;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .add-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .json-output {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            max-height: 600px;
+            overflow: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .guide {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .guide h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .guide ul {
+            list-style: none;
+        }
+
+        .guide li {
+            color: #555;
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .guide li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #8b5cf6;
+        }
+
+        .guide strong {
+            color: #333;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease;
+            z-index: 1000;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .root-type-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .badge-object {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-array {
+            background: #ede9fe;
+            color: #6b21a8;
+        }
+
+        .btn-duplicate {
+            color: #10b981;
+        }
+
+        .btn-duplicate:hover {
+            background: #d1fae5;
+        }
+
+        .duplicate-controls {
+            background: #f0fdf4;
+            border: 2px dashed #10b981;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Constructor Visual de JSON</h1>
+            <p class="subtitle">Crea estructuras JSON de forma interactiva. Los valores se convierten automáticamente según su tipo.</p>
+            
+            <div class="root-selector">
+                <label for="rootType">Tipo de raíz:</label>
+                <select id="rootType" onchange="app.changeRootType(this.value)">
+                    <option value="object">Objeto { }</option>
+                    <option value="array">Array [ ]</option>
+                </select>
+                <span id="rootBadge" class="root-type-badge badge-object">Raíz: Objeto</span>
+            </div>
+
+            <div class="toolbar">
+                <button class="btn btn-primary" onclick="app.addProperty([])">
+                    ➕ Agregar Propiedad
+                </button>
+                <button class="btn btn-success" onclick="app.addObject([])">
+                    ➕ Agregar Objeto
+                </button>
+                <button class="btn btn-purple" onclick="app.addArray([])">
+                    ➕ Agregar Array
+                </button>
+                <button class="btn btn-gray" onclick="app.downloadJSON()">
+                    💾 Descargar
+                </button>
+                <button class="btn btn-gray" onclick="app.copyJSON()">
+                    📋 Copiar
+                </button>
+                <label class="btn btn-gray">
+                    📂 Cargar JSON
+                    <input type="file" id="fileInput" accept=".json" onchange="app.loadJSON(event)">
+                </label>
+                <button class="btn btn-danger" onclick="app.clearAll()">
+                    🗑️ Limpiar Todo
+                </button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="panel">
+                <h2>Constructor Visual</h2>
+                <div class="editor" id="editor">
+                    <div class="empty-state">
+                        Comienza agregando elementos
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>JSON Generado</h2>
+                <pre class="json-output" id="jsonOutput">{}</pre>
+            </div>
+        </div>
+
+        <div class="guide">
+            <h3>📚 Guía Rápida</h3>
+            <ul>
+                <li><strong>Tipo de raíz:</strong> Elige si tu JSON inicia con un objeto {} o un array []</li>
+                <li><strong>Duplicar estructura:</strong> En arrays, usa el botón "📋 Duplicar" para copiar la estructura de un objeto con sus claves vacías</li>
+                <li><strong>Tipos de datos:</strong> Escribe "true" o "false" para booleanos, números sin comillas, "null" para nulo, o texto para strings</li>
+                <li><strong>Objetos:</strong> Contienen pares clave:valor (borde azul)</li>
+                <li><strong>Arrays:</strong> Listas ordenadas de elementos (borde morado)</li>
+                <li><strong>Anidación:</strong> Puedes crear objetos dentro de arrays y viceversa</li>
+                <li><strong>Edición:</strong> Haz clic en cualquier clave o valor para editarlo</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const app = {
+            data: {},
+            rootType: 'object',
+
+            init() {
+                this.render();
+            },
+
+            changeRootType(type) {
+                if (Object.keys(this.data).length > 0 || (Array.isArray(this.data) && this.data.length > 0)) {
+                    if (!confirm('¿Cambiar el tipo de raíz eliminará todos los datos actuales. ¿Continuar?')) {
+                        document.getElementById('rootType').value = this.rootType;
+                        return;
+                    }
+                }
+
+                this.rootType = type;
+                this.data = type === 'array' ? [] : {};
+                
+                const badge = document.getElementById('rootBadge');
+                if (type === 'array') {
+                    badge.textContent = 'Raíz: Array';
+                    badge.className = 'root-type-badge badge-array';
+                } else {
+                    badge.textContent = 'Raíz: Objeto';
+                    badge.className = 'root-type-badge badge-object';
+                }
+                
+                this.render();
+            },
+
+            parseValue(value) {
+                if (value === "true") return true;
+                if (value === "false") return false;
+                if (value === "null") return null;
+                if (value === "") return "";
+                if (!isNaN(value) && value.trim() !== "") return Number(value);
+                return value;
+            },
+
+            addProperty(path) {
+                let current = this.data;
+                for (let key of path) {
+                    current = current[key];
+                }
+                
+                if (Array.isArray(current)) {
+                    current.push("");
+                } else {
+                    const newKey = `propiedad${Object.keys(current).length + 1}`;
+                    current[newKey] = "";
+                }
+                this.render();
+            },
+
+            addObject(path) {
+                let current = this.data;
+                for (let key of path) {
+                    current = current[key];
+                }
+                
+                if (Array.isArray(current)) {
+                    current.push({});
+                } else {
+                    const newKey = `objeto${Object.keys(current).length + 1}`;
+                    current[newKey] = {};
+                }
+                this.render();
+            },
+
+            addArray(path) {
+                let current = this.data;
+                for (let key of path) {
+                    current = current[key];
+                }
+                
+                if (Array.isArray(current)) {
+                    current.push([]);
+                } else {
+                    const newKey = `array${Object.keys(current).length + 1}`;
+                    current[newKey] = [];
+                }
+                this.render();
+            },
+
+            addArrayItem(path) {
+                let current = this.data;
+                for (let key of path) {
+                    current = current[key];
+                }
+                current.push("");
+                this.render();
+            },
+
+            updateValue(path, key, value) {
+                let current = this.data;
+                for (let k of path) {
+                    current = current[k];
+                }
+                current[key] = this.parseValue(value);
+                this.render();
+            },
+
+            updateKey(path, oldKey, newKey) {
+                if (oldKey === newKey) return;
+                let current = this.data;
+                for (let k of path) {
+                    current = current[k];
+                }
+                const value = current[oldKey];
+                delete current[oldKey];
+                current[newKey] = value;
+                this.render();
+            },
+
+            deleteProperty(path, key) {
+                let current = this.data;
+                for (let k of path) {
+                    current = current[k];
+                }
+                if (Array.isArray(current)) {
+                    current.splice(key, 1);
+                } else {
+                    delete current[key];
+                }
+                this.render();
+            },
+
+            duplicateStructure(path, index) {
+                let current = this.data;
+                for (let key of path) {
+                    current = current[key];
+                }
+                
+                if (Array.isArray(current) && current[index] !== undefined) {
+                    const template = current[index];
+                    const duplicate = this.cloneStructure(template);
+                    current.push(duplicate);
+                    this.render();
+                    this.showNotification('Estructura duplicada');
+                }
+            },
+
+            cloneStructure(obj) {
+                if (obj === null || typeof obj !== 'object') {
+                    return typeof obj === 'string' ? '' : typeof obj === 'number' ? 0 : typeof obj === 'boolean' ? false : null;
+                }
+                
+                if (Array.isArray(obj)) {
+                    return obj.length > 0 ? [this.cloneStructure(obj[0])] : [];
+                }
+                
+                const clone = {};
+                for (let key in obj) {
+                    clone[key] = this.cloneStructure(obj[key]);
+                }
+                return clone;
+            },
+
+            renderValue(obj, path = []) {
+                if (obj === null || obj === undefined) {
+                    return '<span style="color: #9ca3af; font-style: italic;">null</span>';
+                }
+
+                if (Array.isArray(obj)) {
+                    let html = '<div class="array-group">';
+                    obj.forEach((item, index) => {
+                        html += '<div class="property-row">';
+                        html += `<span class="array-index">[${index}]</span>`;
+                        
+                        if (typeof item === 'object' && item !== null) {
+                            const pathStr = JSON.stringify([...path]);
+                            html += `<button class="btn-small btn-duplicate" onclick="app.duplicateStructure(${pathStr}, ${index})" title="Duplicar esta estructura">📋 Duplicar</button>`;
+                            html += `<button class="btn-small btn-delete" onclick="app.deleteProperty(${pathStr}, ${index})">🗑️</button>`;
+                            html += '</div>';
+                            html += this.renderValue(item, [...path, index]);
+                        } else {
+                            const pathStr = JSON.stringify([...path]);
+                            html += `<input type="text" class="property-value" value="${item === null ? 'null' : String(item)}" 
+                                     onchange="app.updateValue(${pathStr}, ${index}, this.value)" placeholder="valor">`;
+                            html += `<button class="btn-small btn-delete" onclick="app.deleteProperty(${pathStr}, ${index})">🗑️</button>`;
+                            html += '</div>';
+                        }
+                    });
+                    
+                    const pathStr = JSON.stringify(path);
+                    html += '<div class="add-controls">';
+                    html += `<button class="btn-small btn-add" onclick="app.addProperty(${pathStr})">➕ Valor simple</button>`;
+                    html += `<button class="btn-small btn-add" onclick="app.addObject(${pathStr})">➕ Objeto</button>`;
+                    html += `<button class="btn-small btn-add" onclick="app.addArray(${pathStr})">➕ Array</button>`;
+                    html += '</div>';
+                    
+                    // Mostrar control de duplicación si hay al menos un objeto/array
+                    if (obj.length > 0 && typeof obj[0] === 'object' && obj[0] !== null) {
+                        html += '<div class="duplicate-controls">';
+                        html += '💡 <strong>Tip:</strong> Usa el botón "📋 Duplicar" en cada elemento para replicar su estructura';
+                        html += '</div>';
+                    }
+                    
+                    html += '</div>';
+                    return html;
+                }
+
+                if (typeof obj === 'object') {
+                    let html = '<div class="property-group">';
+                    
+                    for (let [key, value] of Object.entries(obj)) {
+                        html += '<div class="property-row">';
+                        const pathStr = JSON.stringify(path);
+                        html += `<input type="text" class="property-key" value="${key}" 
+                                 onchange="app.updateKey(${pathStr}, '${key}', this.value)" placeholder="clave">`;
+                        html += '<span style="color: #9ca3af;">:</span>';
+                        
+                        if (typeof value !== 'object' || value === null) {
+                            html += `<input type="text" class="property-value" value="${value === null ? 'null' : String(value)}" 
+                                     onchange="app.updateValue(${pathStr}, '${key}', this.value)" 
+                                     placeholder="valor (texto, 123, true, false, null)">`;
+                        }
+                        
+                        html += `<button class="btn-small btn-delete" onclick="app.deleteProperty(${pathStr}, '${key}')">🗑️</button>`;
+                        html += '</div>';
+                        
+                        if (typeof value === 'object' && value !== null) {
+                            html += this.renderValue(value, [...path, key]);
+                        }
+                    }
+                    
+                    const pathStr = JSON.stringify(path);
+                    html += '<div class="add-controls">';
+                    html += `<button class="btn-small btn-add" onclick="app.addProperty(${pathStr})">➕ Propiedad</button>`;
+                    html += `<button class="btn-small btn-add" onclick="app.addObject(${pathStr})">➕ Objeto</button>`;
+                    html += `<button class="btn-small btn-add" onclick="app.addArray(${pathStr})">➕ Array</button>`;
+                    html += '</div>';
+                    html += '</div>';
+                    return html;
+                }
+
+                return `<span style="font-family: monospace;">${String(obj)}</span>`;
+            },
+
+            render() {
+                const editor = document.getElementById('editor');
+                const jsonOutput = document.getElementById('jsonOutput');
+
+                const isEmpty = Array.isArray(this.data) ? this.data.length === 0 : Object.keys(this.data).length === 0;
+
+                if (isEmpty) {
+                    editor.innerHTML = '<div class="empty-state">Comienza agregando elementos</div>';
+                } else {
+                    editor.innerHTML = this.renderValue(this.data);
+                }
+
+                jsonOutput.textContent = JSON.stringify(this.data, null, 2);
+            },
+
+            downloadJSON() {
+                const blob = new Blob([JSON.stringify(this.data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'data.json';
+                a.click();
+                this.showNotification('JSON descargado correctamente');
+            },
+
+            copyJSON() {
+                navigator.clipboard.writeText(JSON.stringify(this.data, null, 2));
+                this.showNotification('JSON copiado al portapapeles');
+            },
+
+            loadJSON(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            this.data = JSON.parse(e.target.result);
+                            this.rootType = Array.isArray(this.data) ? 'array' : 'object';
+                            document.getElementById('rootType').value = this.rootType;
+                            
+                            const badge = document.getElementById('rootBadge');
+                            if (this.rootType === 'array') {
+                                badge.textContent = 'Raíz: Array';
+                                badge.className = 'root-type-badge badge-array';
+                            } else {
+                                badge.textContent = 'Raíz: Objeto';
+                                badge.className = 'root-type-badge badge-object';
+                            }
+                            
+                            this.render();
+                            this.showNotification('JSON cargado correctamente');
+                        } catch (err) {
+                            alert('Error al leer el JSON: ' + err.message);
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            },
+
+            clearAll() {
+                if (confirm('¿Estás seguro de que quieres eliminar todo?')) {
+                    this.data = this.rootType === 'array' ? [] : {};
+                    this.render();
+                    this.showNotification('Datos eliminados');
+                }
+            },
+
+            showNotification(message) {
+                const notification = document.createElement('div');
+                notification.className = 'notification';
+                notification.textContent = message;
+                document.body.appendChild(notification);
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            }
+        };
+
+        // Inicializar la aplicación
+        app.init();
+    </script>
+</body>
+</html>
